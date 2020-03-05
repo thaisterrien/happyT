@@ -1,0 +1,82 @@
+let previous_country = 0;
+
+d3.json("./custom.geo.json", (data) => {
+    d3.csv("./Project_Data.csv", (countries)=> {
+        let box = document.querySelector('#map').getBoundingClientRect();
+        let color = d3.scaleThreshold().range(["#fff7ec","#fee8c8","#fdd49e","#fdbb84","#fc8d59", "#ef6548","#d7301f"]);
+        let projection = d3.geoMercator()
+            .fitExtent([
+                [box.left, box.top],// box.left, box.top
+                [box.width, box.height] //box.width, box.height
+            ], data);
+        data.features.forEach((d) =>{
+            match = countries.filter((c => {
+                return c.country == d.properties.name;
+            }));
+            if (match.length == 0) {
+                console.log(d.properties.name)
+
+            } else {
+                d.properties.countryData = {};
+                d.properties.countryData.medal = match[0].Medal;
+                d.properties.countryData.height = +match[0].Height;
+            }
+        });
+        color.domain(d3.extent(countries, (d)=>{
+            return +d["Height"];
+        }))
+        // create a path to draw the countries
+        var path = d3.geoPath()
+            .projection(projection);
+        
+        let map = d3.select('#map').selectAll("path")
+            .data(data.features)
+            .enter()
+            .append('path')
+            .attr('d', path)
+            .style('stroke', 'black')
+            .style('stroke-width', 0.5)
+            .attr('fill', original_color) // create color scale 
+   
+       // map 
+            // .on('click', (datum, index, nodes)=>{
+            //     graphdraw(datum.properties.name, datum.properties.medal)
+            //     nodes[previous_country].setAttribute('fill', original_color(datum))
+            //     nodes[index].setAttribute('fill', "blue")
+            //     previous_country = index
+            // })
+        map
+            .on('mouseover', function(datum) {
+                // select our tooltip
+                var tooltip = d3.select('#myTooltip');
+          
+                // make sure our tooltip is going to be displayed
+                tooltip.style('display', 'block')
+          
+                // set the initial position of the tooltip
+                tooltip.style('left', d3.event.pageX + 'px');
+                tooltip.style('top', d3.event.pageY+'px');
+          
+                // set our tooltip to have the values for the 
+                // element that we're mousing over
+                tooltip.html(datum.properties.name)
+            })
+            
+    });
+}); 
+
+function graphdraw (name, medal){
+    //draw my graph
+}
+
+let original_color = (d) => {
+    if(d.properties.name === "United States"){
+        return "pink"
+    } if(d.properties.name === "Brazil"){
+        return "pink"
+    } if(d.properties.name === "Russia"){
+        return "pink"
+    } else {
+        return "yellow"
+    }
+}
